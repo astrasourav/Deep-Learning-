@@ -1,0 +1,140 @@
+I am running this code on Google Colab.
+NOTE: Use GPU in colab for faster processing power.
+
+This is a very simple model of Binary CLassification between (Cats & Dogs) made using CNN(Convolutional Neural Network).
+NOTE: I have used Kaggle dataset in my code. But you can use any dataset.
+
+===========================================================================================================================================
+ Importing kaggle datasets in colab
+
+# Code for using kaggle datsets in colab
+
+!pip install kaggle
+
+from google.colab import files
+files.upload()
+
+!mkdir -p  ~/.kaggle
+!cp kaggle.json ~/.kaggle/
+
+# Changing permission
+!chmod 600 ~/.kaggle/kaggle.json
+----------------------------------------------------------------
+
+# Importing the KAggle dataset
+
+!kaggle datasets download -d chetankv/dogs-cats-images
+-----------------------------------------------------------------
+
+import os 
+import zipfile
+
+data_zip = '/content/dogs-cats-images.zip'
+data_file = zipfile.ZipFile(data_zip, 'r')
+data_file.extractall('/content/')
+data_file.close()
+------------------------------------------------------------------
+
+Using tensorflow and keras
+
+# Importing Libraries
+
+import tensorflow as tf
+from tensorflow import keras
+----------------------------------------------------------------
+
+# Preprocessing the data 
+
+from keras.preprocessing.image import ImageDataGenerator
+
+batch_size = 32
+
+train_dir = '/content/dog vs cat/dataset/training_set'
+train_datagen = ImageDataGenerator(
+      rescale=1./255,
+      horizontal_flip=True,
+      shear_range=0.2,
+      zoom_range=0.2,
+)
+
+test_dir = '/content/dog vs cat/dataset/test_set' 
+test_datagen = ImageDataGenerator(rescale=1./255)
+
+
+train_generator = train_datagen.flow_from_directory(
+      train_dir,
+      target_size=(64, 64),
+      class_mode='binary',
+      batch_size=batch_size
+)
+
+test_generator = test_datagen.flow_from_directory(
+      test_dir,
+      target_size=(64, 64),
+      class_mode='binary',
+      batch_size=batch_size
+)
+-----------------------------------------------------------------------------
+
+Creating CNN Model
+
+model = tf.keras.models.Sequential([
+                                    tf.keras.layers.Conv2D(32, (3,3), activation='relu', input_shape=(64, 64, 3)),
+                                    tf.keras.layers.MaxPooling2D((2,2), strides=2),
+                                    tf.keras.layers.Dropout(0.3),
+                                    tf.keras.layers.Conv2D(64, (3,3), activation='relu'),
+                                    tf.keras.layers.MaxPooling2D((2,2), strides=2),
+                                    tf.keras.layers.Dropout(0.2),
+                                    tf.keras.layers.Conv2D(128, (3,3), activation='relu'),
+                                    tf.keras.layers.MaxPooling2D((2,2), strides=2),
+                                    tf.keras.layers.Dropout(0.15),
+                                    tf.keras.layers.Flatten(),
+                                    tf.keras.layers.Dense(32, activation='relu'),
+                                    tf.keras.layers.Dropout(0.15),
+                                    tf.keras.layers.Dense(64, activation='relu'),
+                                    tf.keras.layers.Dropout(0.1),
+                                    tf.keras.layers.Dense(1, activation='sigmoid')
+])
+
+model.summary()
+-----------------------------------------------------------------------------------
+
+# Compiling and training thee model
+
+model.compile(optimizer='adam', loss='binary_crossentropy', metrics=['accuracy'])
+
+hist = model.fit(train_generator, epochs=25, steps_per_epoch=8000/batch_size, validation_data=test_generator, validation_steps=2000/batch_size)
+-----------------------------------------------------------------------------------
+
+# Plotting the model curve 
+
+import matplotlib.pyplot as plt
+import pandas as pd
+
+pd.DataFrame(hist.history).plot(figsize=(8,5))
+plt.grid(True)
+plt.gca().set_ylim(0,1)
+plt.show()
+--------------------------------------------------------------------------------------
+
+# # Predicting image
+
+# # Preprocessing the image data before testing it with our model
+import numpy as np
+from keras.preprocessing import image
+
+path = '/content/cat-pet-animal-domestic-104827.jpeg'(NOTE:- USE YOUR IMAGE PATH HERE)
+new = image.load_img(path, target_size=(64,64))
+new = image.img_to_array(new)
+new = np.expand_dims(new, axis=0)
+
+asset = model.predict(new)
+print(asset)
+----------------------------------------------------------------------------------------
+
+# Checking class indices to check which indices belongs to which class
+
+test_generator.class_indices
+
+
+I achieved approx 83% accuracy and moreover this model was not overfitting the data.
