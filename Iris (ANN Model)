@@ -49,6 +49,15 @@ model = keras.models.Sequential([
 
 model.summary()
 
+# Plotting graph
+
+import matplotlib.pyplot as plt
+
+pd.DataFrame(history.history).plot(figsize=(10, 9))
+plt.grid=True
+plt.gca().set_ylim(0,1)
+plt.show()
+
 # Compiling and Training the model
 
 model.compile(optimizer='adam', loss='categorical_crossentropy', metrics=['accuracy'])
